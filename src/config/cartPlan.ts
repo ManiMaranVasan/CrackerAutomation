@@ -28,14 +28,17 @@ export const PRODUCTS_PATH = process.env.PRODUCTS_PATH ?? '/products.php?device=
 export const CART_BUDGET = num(process.env.CART_BUDGET, 3000);
 
 /**
- * The cart must land within this many rupees of the budget, otherwise the planner
- * did a poor job. Kept loose because the cheapest remaining item decides how close we can get.
+ * How far below the budget the cart may land. 0 = exactly the budget, which also
+ * meets sathyapyro.com's Tamil Nadu minimum order of ₹3000.
  */
-export const BUDGET_TOLERANCE = num(process.env.BUDGET_TOLERANCE, 150);
+export const BUDGET_TOLERANCE = num(process.env.BUDGET_TOLERANCE, 0);
 
-/** Aerial / loud / large items are never treated as kid friendly or "minimal". */
+/**
+ * Aerial / loud / large items are never treated as kid friendly or "minimal".
+ * "Fancy pipes" (2', 3 1/2', 4' fancy, chotta fancy) are aerial shells; "lar" is a chain of sound crackers.
+ */
 const NOT_FOR_KIDS =
-  /rocket|aerial|sky\s*shot|multi\s*shot|\bshots?\b|repeat|mega|atom|hydro|thunder|king|bullet|bomb|cake|display|\b(1000|2000|5000|10000)\s*wala/i;
+  /rocket|aerial|sky\s*shot|multi\s*shot|\bshots?\b|repeat|mega|atom|hydro|thunder|king|bullet|bomb|cake|display|\b(1000|2000|5000|10000)\s*wala|pipe|chotta\s*fancy|\d'\s*fancy|dhamaka|double\s*ball|nayagara|niagara|\blar\b/i;
 
 export const BUCKETS: BucketRule[] = [
   {

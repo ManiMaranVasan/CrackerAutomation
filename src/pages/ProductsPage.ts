@@ -8,15 +8,24 @@ import { Product } from '../utils/cartPlanner';
  * single layout the scraper finds every quantity input and reads the product name,
  * price and category from the row / card around it. Selectors can still be pinned
  * through env vars if the heuristics ever pick the wrong thing.
+ *
+ * The defaults for name / price / MRP / category / cart total match sathyapyro.com's
+ * product cards (".product_name", ".rate", ".strike", ".category-bg", ".sub_total").
  */
 export const SELECTORS = {
   qtyInput:
     process.env.QTY_SELECTOR ??
     'input[type="number"], input[name*="qty" i], input[id*="qty" i], input[class*="qty" i], input[name*="quantity" i], input[class*="quantity" i]',
+  productName: process.env.NAME_SELECTOR ?? '.product_name',
+  price: process.env.PRICE_SELECTOR ?? '.rate',
+  mrp: process.env.MRP_SELECTOR ?? '.strike',
+  category: process.env.CATEGORY_SELECTOR ?? '.category-bg',
   /** Tried in order; the first one showing a positive amount wins (grand/net total before plain totals). */
   cartTotal: (process.env.CART_TOTAL_SELECTOR
     ? [process.env.CART_TOTAL_SELECTOR]
     : [
+        // sathyapyro.com: cart amount after discount, before packing charges.
+        '.sub_total',
         '[id*="grand" i], [class*="grand" i]',
         '[id*="net_total" i], [id*="nettotal" i], [class*="net-total" i], [class*="nettotal" i]',
         '[id*="total_amount" i], [id*="totalamount" i], [class*="total-amount" i], [id*="cart_total" i], [class*="cart-total" i], [id*="overall" i]',
@@ -48,7 +57,7 @@ export class ProductsPage {
 
   async scrapeProducts(): Promise<Product[]> {
     return this.page.evaluate(
-      ({ qtySelector, attr }) => {
+      ({ qtySelector, attr, sel }) => {
         const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim();
         const priceOf = (s: string) => {
           const m = s.replace(/,/g, '').match(/(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)/i);
@@ -64,13 +73,15 @@ export class ProductsPage {
         // Category headings in document order, used for card layouts.
         const headings = [
           ...document.querySelectorAll(
-            'h1, h2, h3, h4, h5, h6, [class*="cat" i][class*="title" i], [class*="category" i] > :first-child, [class*="cat-head" i], .accordion-button, .panel-title',
+            `${sel.category}, h1, h2, h3, h4, h5, h6, [class*="cat" i][class*="title" i], [class*="category" i] > :first-child, [class*="cat-head" i], .accordion-button, .panel-title`,
           ),
         ].filter((h) => clean(h.textContent).length > 1 && clean(h.textContent).length < 80 && !h.querySelector('input'));
 
         const precedingHeading = (el: Element) => {
           let best = '';
           for (const h of headings) {
+            // Skip headings that wrap the element itself (e.g. a whole category section).
+            if (h.contains(el)) continue;
             if (h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) best = clean(h.textContent);
           }
           return best;
@@ -127,6 +138,15 @@ export class ProductsPage {
             input.parentElement?.parentElement?.parentElement ??
             document.body;
 
+          // Known card markup first.
+          if (!name) name = clean(container.querySelector(sel.productName)?.textContent);
+          if (Number.isNaN(price)) {
+            const rate = container.querySelector(sel.price);
+            if (rate) price = priceOf(clean(rate.textContent));
+            const strike = container.querySelector(sel.mrp);
+            if (strike) mrp = priceOf(clean(strike.textContent));
+          }
+
           if (!name) {
             const named = container.querySelector('[class*="name" i], [class*="title" i], h4, h5, h6, strong, b');
             name = clean(named?.textContent);
@@ -152,12 +172,18 @@ export class ProductsPage {
           }
 
           if (!category) category = precedingHeading(input);
-          if (name && price > 0) products.push({ idx, name, category, price, ...(mrp && mrp > 0 ? { mrp } : {}) });
+          // Some sites repeat a qty box in the cart / order form; keep the first one.
+          const duplicate = products.some((p) => p.name === name && p.price === price);
+          if (name && price > 0 && !duplicate) products.push({ idx, name, category, price, ...(mrp && mrp > 0 ? { mrp } : {}) });
         });
 
         return products;
       },
-      { qtySelector: SELECTORS.qtyInput, attr: QA_ATTR },
+      {
+        qtySelector: SELECTORS.qtyInput,
+        attr: QA_ATTR,
+        sel: { productName: SELECTORS.productName, price: SELECTORS.price, mrp: SELECTORS.mrp, category: SELECTORS.category },
+      },
     );
   }
 

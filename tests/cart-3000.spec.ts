@@ -37,8 +37,8 @@ test.describe(`Cart of ₹${CART_BUDGET}: night crackers for kids + minimal day 
     });
 
     const siteTotal = await test.step('Verify cart total shown by the site', async () => {
-      // Give the page's own JS a moment to recalculate.
-      await expect.poll(() => products.readCartTotal(), { timeout: 10_000 }).not.toBeNull().catch(() => {});
+      // Quantities are saved via AJAX one by one; wait for the last update to land.
+      await expect.poll(() => products.readCartTotal(), { timeout: 20_000 }).toBe(plan.total).catch(() => {});
       const total = await products.readCartTotal();
       if (total === null) {
         testInfo.annotations.push({ type: 'warning', description: 'Cart total element not found; set CART_TOTAL_SELECTOR.' });

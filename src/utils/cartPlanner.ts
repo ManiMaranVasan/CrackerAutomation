@@ -84,6 +84,13 @@ export function planCart(products: Product[], buckets: BucketRule[], budget: num
   // Small catalogues can hit the per-item caps early; top up the priority bucket only,
   // so the secondary ("minimal") bucket stays minimal.
   if (buckets[0]) fill(buckets[0], budget, Infinity);
+  if (buckets[0]) {
+    for (const p of exactTopUp(candidates.get(buckets[0].key)!, budget - total)) {
+      qty.set(p.idx, (qty.get(p.idx) ?? 0) + 1);
+      byBucket[buckets[0].key] += p.price;
+      total += p.price;
+    }
+  }
 
   const lines: CartLine[] = [];
   for (const p of products) {
@@ -91,6 +98,38 @@ export function planCart(products: Product[], buckets: BucketRule[], budget: num
     if (q) lines.push({ product: p, bucket: bucketOf.get(p.idx)!, qty: q, lineTotal: round2(q * p.price) });
   }
   return { lines, total: round2(total), budget, byBucket };
+}
+
+/**
+ * Greedy filling usually stops a few rupees short. Picks the combination of items
+ * (repeats allowed) whose sum is the largest amount <= remaining, ideally exactly it.
+ * Unbounded knapsack over paise; the remainder is small so this is cheap.
+ */
+export function exactTopUp(items: Product[], remaining: number): Product[] {
+  const cap = Math.round(remaining * 100);
+  if (cap <= 0 || !items.length) return [];
+  const cents = items.map((p) => Math.round(p.price * 100));
+  // from[s] = index of the item that last reached sum s, -1 = unreachable.
+  const from = new Int32Array(cap + 1).fill(-1);
+  const reached = new Uint8Array(cap + 1);
+  reached[0] = 1;
+  for (let s = 1; s <= cap; s++) {
+    for (let i = 0; i < cents.length; i++) {
+      if (cents[i] <= s && reached[s - cents[i]]) {
+        reached[s] = 1;
+        from[s] = i;
+        break;
+      }
+    }
+  }
+  let s = cap;
+  while (s > 0 && !reached[s]) s--;
+  const picked: Product[] = [];
+  while (s > 0) {
+    picked.push(items[from[s]]);
+    s -= cents[from[s]];
+  }
+  return picked;
 }
 
 export const round2 = (n: number) => Math.round(n * 100) / 100;
