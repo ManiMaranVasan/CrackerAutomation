@@ -1,0 +1,55 @@
+# CrackerAutomation
+
+Playwright + TypeScript automation for <https://sathyapyro.com/products.php?device=mobile>.
+
+## Scenario: ₹3000 cart
+
+`tests/cart-3000.spec.ts` (project `live-mobile`, Pixel 7 emulation):
+
+1. Opens the products page in mobile mode and closes any popup.
+2. Reads every product that has a quantity box: name, net price, MRP, site category.
+3. Plans a cart of **at most ₹3000** (and within ₹150 of it):
+   - **~70% night crackers for kids**: sparklers, flower pots, ground chakkars, pencils, fountains, twinkling stars…
+     Rockets, shots, bombs, aerial items and big garlands are excluded.
+   - **~30% minimal day crackers**: small sound crackers such as Lakshmi, Kuruvi, Bijili, 28/50/100 wala chains.
+     Max 2 units per item, no bombs, no 1000+ wala garlands.
+   - Items are added one unit at a time, cheapest first, round-robin, so the cart has many different products.
+4. Types the quantities into the page and checks the site's own cart total matches the plan and stays ≤ ₹3000.
+5. **Shares the list** in `reports/cart-list.md` (+ `cart-list.json`), prints it in the console and attaches it,
+   the scraped catalogue and a full-page screenshot to the HTML report.
+
+## Run
+
+```bash
+npm ci
+npx playwright install chromium   # first time only
+npm run test:offline              # planner + page object against local fixtures (no network)
+npm run test:live                 # real site
+npm run test:live:headed          # watch it run
+npm run report                    # open the HTML report
+```
+
+## Tuning (env vars)
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `CART_BUDGET` | `3000` | Max cart value (₹) |
+| `BUDGET_TOLERANCE` | `150` | Cart must be at least `budget - tolerance` |
+| `NIGHT_SHARE` | `0.7` | Share of budget for night/kids crackers |
+| `MAX_QTY_PER_ITEM` / `DAY_MAX_QTY_PER_ITEM` | `5` / `2` | Variety caps per product |
+| `BASE_URL`, `PRODUCTS_PATH` | site / `/products.php?device=mobile` | Target page |
+| `QTY_SELECTOR`, `CART_TOTAL_SELECTOR` | heuristics | Pin selectors if the site markup changes |
+
+Category keywords live in `src/config/cartPlan.ts`.
+
+## Layout
+
+```
+src/config/cartPlan.ts     budget + category rules
+src/pages/ProductsPage.ts  page object (scrape, set qty, read total)
+src/utils/cartPlanner.ts   cart selection logic
+src/utils/report.ts        markdown/json cart list
+tests/cart-3000.spec.ts    live end-to-end scenario
+tests/planner.spec.ts      unit tests for the planner
+tests/products-page.fixture.spec.ts + tests/fixtures/  page object tests on sample HTML (made-up data)
+```

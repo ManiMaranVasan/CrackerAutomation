@@ -1,0 +1,29 @@
+{
+  "name": "cracker-automation",
+  "version": "1.0.0",
+  "description": "Playwright automation for sathyapyro.com cart scenarios",
+  "scripts": {
+    "test": "playwright test",
+    "test:offline": "playwright test --project=offline",
+    "test:live": "playwright test --project=live-mobile",
+    "test:live:headed": "playwright test --project=live-mobile --headed",
+    "report": "playwright show-report",
+    "typecheck": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ManiMaranVasan/CrackerAutomation.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ManiMaranVasan/CrackerAutomation/issues"
+  },
+  "homepage": "https://github.com/ManiMaranVasan/CrackerAutomation#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
+}

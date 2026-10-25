@@ -1,0 +1,46 @@
+<!doctype html>
+<!-- Test fixture only: a typical cracker-shop quick-order table with made-up items and prices.
+     Used to check the page object offline; it is NOT data from the real site. -->
+<html>
+<head><meta charset="utf-8"><title>Fixture products</title>
+<style>.strike{text-decoration:line-through}</style></head>
+<body>
+<table id="products">
+  <thead><tr><th>S.No</th><th>Product Name</th><th>Content</th><th>Actual Price</th><th>Net Price</th><th>Qty</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td colspan="7">SPARKLERS</td></tr>
+    <tr><td>1</td><td>10 cm Electric Sparklers</td><td>10 Pcs</td><td class="strike">₹ 100.00</td><td>₹ 20.00</td><td><input type="number" name="qty[]" data-price="20"></td><td class="line">0</td></tr>
+    <tr><td>2</td><td>15 cm Colour Sparklers</td><td>10 Pcs</td><td class="strike">₹ 200.00</td><td>₹ 40.00</td><td><input type="number" name="qty[]" data-price="40"></td><td class="line">0</td></tr>
+    <tr><td colspan="7">FLOWER POTS</td></tr>
+    <tr><td>3</td><td>Flower Pots Big</td><td>10 Pcs</td><td class="strike">₹ 500.00</td><td>₹ 100.00</td><td><input type="number" name="qty[]" data-price="100"></td><td class="line">0</td></tr>
+    <tr><td>4</td><td>Flower Pots Special</td><td>10 Pcs</td><td class="strike">₹ 750.00</td><td>₹ 150.00</td><td><input type="number" name="qty[]" data-price="150"></td><td class="line">0</td></tr>
+    <tr><td colspan="7">GROUND CHAKKAR</td></tr>
+    <tr><td>5</td><td>Ground Chakkar Big</td><td>10 Pcs</td><td class="strike">₹ 300.00</td><td>₹ 60.00</td><td><input type="number" name="qty[]" data-price="60"></td><td class="line">0</td></tr>
+    <tr><td colspan="7">SOUND CRACKERS</td></tr>
+    <tr><td>6</td><td>4" Lakshmi</td><td>5 Pcs</td><td class="strike">₹ 150.00</td><td>₹ 30.00</td><td><input type="number" name="qty[]" data-price="30"></td><td class="line">0</td></tr>
+    <tr><td>7</td><td>Red Bijili</td><td>100 Pcs</td><td class="strike">₹ 250.00</td><td>₹ 50.00</td><td><input type="number" name="qty[]" data-price="50"></td><td class="line">0</td></tr>
+    <tr><td>8</td><td>Hydro Bomb</td><td>10 Pcs</td><td class="strike">₹ 400.00</td><td>₹ 80.00</td><td><input type="number" name="qty[]" data-price="80"></td><td class="line">0</td></tr>
+    <tr><td colspan="7">GARLANDS</td></tr>
+    <tr><td>9</td><td>28 Wala Chain</td><td>1 Box</td><td class="strike">₹ 100.00</td><td>₹ 25.00</td><td><input type="number" name="qty[]" data-price="25"></td><td class="line">0</td></tr>
+    <tr><td>10</td><td>1000 Wala Garland</td><td>1 Box</td><td class="strike">₹ 1500.00</td><td>₹ 300.00</td><td><input type="number" name="qty[]" data-price="300"></td><td class="line">0</td></tr>
+    <tr><td colspan="7">ROCKETS</td></tr>
+    <tr><td>11</td><td>Baby Rocket</td><td>10 Pcs</td><td class="strike">₹ 200.00</td><td>₹ 45.00</td><td><input type="number" name="qty[]" data-price="45"></td><td class="line">0</td></tr>
+  </tbody>
+</table>
+<p>Net Total: ₹ <span id="net_total">0.00</span></p>
+<input type="text" name="customer_mobile" placeholder="Mobile">
+<script>
+  const recalc = () => {
+    let total = 0;
+    document.querySelectorAll('input[name="qty[]"]').forEach((i) => {
+      const line = (Number(i.value) || 0) * Number(i.dataset.price);
+      i.closest('tr').querySelector('.line').textContent = line.toFixed(2);
+      total += line;
+    });
+    document.getElementById('net_total').textContent = total.toFixed(2);
+  };
+  document.addEventListener('keyup', recalc);
+  document.addEventListener('change', recalc);
+</script>
+</body>
+</html>
